@@ -4,6 +4,25 @@ from flask import request, jsonify
 from ..models.users import Users, user_schema, users_schema
 
 
+def get_users():
+    
+    users = Users.query.all()
+    if users:
+        result = users_schema.dump(users)
+        return jsonify({'message': 'successfully fetched', 'data': result})
+
+    return jsonify({'message': 'nothing found', 'data': {}})
+
+
+def get_user(id):
+    user = Users.query.get(id)
+    if user:
+        result = user_schema.dump(user)
+        return jsonify({'message': 'successfully fetched', 'data': result}), 201
+
+    return jsonify({'message': "user don't exist", 'data': {}}), 404
+
+
 def post_user():
     username = request.json['username']
     password = request.json['password']
@@ -46,11 +65,23 @@ def update_user(id):
             return jsonify({'message': 'unable to update', 'data':{}}), 500
 
 
-def get_users():
+def delete_user(id):
+    user = Users.query.get(id)
+    if not user:
+        return jsonify({'message': "user don't exist", 'data': {}}), 404
 
-    users = Users.query.all()
-    if users:
-        result = users_schema.dump(users)
-        return jsonify({'message': 'successfully fetched', 'data': result})
-
-    return jsonify({'message': 'nothing found', 'data': {}})
+    if user:
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            result = user_schema.dump(user)
+            return jsonify({'message': 'successfully deleted', 'data': result}), 200
+        except:
+            return jsonify({'message': 'unable to delete', 'data': {}}), 500
+        
+        
+def user_by_username(username):
+    try:
+        return Users.query.filter(Users.username == username).one()
+    except:
+        return None
