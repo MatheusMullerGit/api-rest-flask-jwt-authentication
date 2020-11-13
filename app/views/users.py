@@ -5,8 +5,11 @@ from ..models.users import Users, user_schema, users_schema
 
 
 def get_users():
-    
-    users = Users.query.all()
+    name = request.args.get('name')
+    if name:
+        users = Users.query.filter(Users.name.like(f'%{name}%')).all()
+    else:    
+        users = Users.query.all()
     if users:
         result = users_schema.dump(users)
         return jsonify({'message': 'successfully fetched', 'data': result})
